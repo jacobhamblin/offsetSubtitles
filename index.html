@@ -1,7 +1,87 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+      body {
+        font-family: Arial;
+        text-align: center;
+        color: #555;
+      }
+
+      header {
+        height: 150px;
+        display: flex;
+        justify-content: flex-end;
+        flex-flow: column;
+      }
+
+      .container {
+        width: 600px;
+        margin: 0 auto;
+        display: flex;
+        flex-flow: row wrap;
+      }
+
+      .half {
+        display: inline-block;
+        width: 50%;
+        padding: 0 15px;
+        box-sizing: border-box;
+      }
+
+      .inputs {
+        margin: 30px 0;
+        width: 100%;
+        display: flex;
+        flex-flow: row-wrap;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid #999;
+      }
+
+      input:focus {
+        border: none;
+        border-bottom: 1px solid #999;
+        outline: none;
+      }
+
+      #drop_zone {
+        width: 100%;
+        border: 2px dashed #bbb;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        border-radius: 5px;
+        padding: 25px;
+        text-align: center;
+        font: 20pt bold 'Vollkorn';
+        color: #bbb;
+      }
+    </style>
   </head>
   <body>
+    <header>
+      <h2>offsetTimestamp</h2> 
+    </header>
+    <div class="container">
+      <div id="drop_zone">Drop .srt here</div>
+      <output id="list"></output>
+      <div class="inputs">
+        <div class="half">
+          <label for="offset_seconds">Offset in Seconds</label><br/>
+          <input id="offset_seconds"></input>
+        </div>
+        <div class="half">
+          <label for="offset_milliseconds">Offset in Milliseconds</label><br/>
+          <input id="offset_milliseconds"></input>
+        </div>
+      </div>
+    </div>
+
+    <script src='./offset.js'></script>
   </body>
 </html>
