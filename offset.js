@@ -35,8 +35,8 @@ var processData = function(data) {
   for (var i = 0; i < lines.length; i++) {
     if (lines[i][2] === ':') {
       var startEnd = lines[i].split(' --> ');
-      var reducedStart = reduceByOne(startEnd[0]);
-      var reducedEnd = reduceByOne(startEnd[1]);
+      var reducedStart = offsetTime(startEnd[0]);
+      var reducedEnd = offsetTime(startEnd[1]);
       var newLine = [reducedStart, reducedEnd].join(' --> ');
       lines[i] = newLine;      
     }
@@ -63,10 +63,14 @@ function handleFileSelect(evt) {
 
   var output = [];
   for (var i = 0, f; f = files[i]; i++) {
+    console.log(f);
     output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
                 f.size, ' bytes, last modified: ',
                 f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
                 '</li>');
+    document.querySelector('#save').style.display = 'block';
+    document.querySelector('#drop_zone').style.display = 'none';
+
   }
   document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
 }
@@ -81,8 +85,23 @@ var dropZone = document.getElementById('drop_zone');
 dropZone.addEventListener('dragover', handleDragOver, false);
 dropZone.addEventListener('drop', handleFileSelect, false);
 
-var sanitize = function(str) {
-  debugger
+var sanitize = function(event) {
+  var unsanitized = event.target.value;
+  var sanitized = '';
+  for (var i = 0; i < unsanitized.length; i++) {
+    if (unsanitized[i].match(/[0-9]/g)) sanitized += unsanitized[i];
+  }
+  event.target.value = sanitized;
 }
 
-document.querySelector('.half').addEventListener('keyup', sanitize, false);
+var inputs = document.querySelectorAll('.half input');
+for (var i = 0; i < inputs.length; i++) {
+  inputs[i].addEventListener('change', sanitize, false);
+  inputs[i].addEventListener('keyup', sanitize, false);
+}
+
+var prepFile = function() {
+  var file = new Blob([], {type: 'application/x-subrip'});
+}
+
+document.querySelector('#save').addEventListener('click', function() {debugger}, false);

@@ -53,13 +53,19 @@
       #drop_zone {
         width: 100%;
         border: 2px dashed #bbb;
-        -moz-border-radius: 5px;
-        -webkit-border-radius: 5px;
         border-radius: 5px;
         padding: 25px;
         text-align: center;
         font: 20pt bold 'Vollkorn';
         color: #bbb;
+      }
+
+      #save {
+        padding: 20px 40px;
+        border: 1px solid #999;
+        margin: 20px auto 0 auto;
+        cursor: pointer;
+        display: none;
       }
     </style>
   </head>
@@ -80,8 +86,8 @@
           <input id="offset_milliseconds"></input>
         </div>
       </div>
+      <a id="save">Get .srt</a>
     </div>
-
     <script src='./offset.js'></script>
   </body>
 </html>
