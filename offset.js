@@ -1,3 +1,21 @@
+function round(value, decimals) {
+  return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+}
+
+function maybeAppendZeroes(number, decimalPlaces) {
+  var string = number.toString();
+  var split = string.split('.');
+  if (!split[1]) return string + '.000';
+  if (split[1].length < decimalPlaces) {
+    var newDecimalPlaces = split[1];
+    for (var i = split[1].length; i < decimalPlaces; i++) {
+      newDecimalPlaces += '0';
+    }
+    return split[0] + '.' + newDecimalPlaces;
+  }
+  return string;
+}
+
 String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10); // don't forget the second param
     var hours   = Math.floor(sec_num / 3600);
@@ -21,22 +39,25 @@ String.prototype.fromHHMMSS = function () {
     return seconds;
 }
 
-var offsetTime = function(detailedTime, secondsOffset, millisecondsOffset) {
+var offsetTime = function(detailedTime, offset) {
   var ms = detailedTime.split(',')[1];
   var HHMMSS = detailedTime.split(',')[0]; 
   var seconds = HHMMSS.fromHHMMSS();
-  var reduced = seconds + secondsOffset;
-  var newHHMMSS = reduced.toString().toHHMMSS();
-  return [newHHMMSS, ms].join(',');
+  seconds = Number(seconds + '.' + ms);
+  var reduced = round(seconds + offset, 3);
+  var reducedString = maybeAppendZeroes(reduced, 3);
+  var newMS = reducedString.split('.')[1];
+  var newHHMMSS = reducedString.split('.')[0].toHHMMSS();
+  return [newHHMMSS, newMS].join(',');
 }
 
-var processData = function(data, seconds, milliseconds) {
+var processData = function(data, offset) {
   var lines = data.split('\n')
   for (var i = 0; i < lines.length; i++) {
     if (lines[i][2] === ':') {
       var startEnd = lines[i].split(' --> ');
-      var reducedStart = offsetTime(startEnd[0], seconds, milliseconds);
-      var reducedEnd = offsetTime(startEnd[1], seconds, milliseconds);
+      var reducedStart = offsetTime(startEnd[0], offset);
+      var reducedEnd = offsetTime(startEnd[1], offset);
       var newLine = [reducedStart, reducedEnd].join(' --> ');
       lines[i] = newLine;      
     }
@@ -83,23 +104,19 @@ var sanitize = function(event) {
   var unsanitized = event.target.value;
   var sanitized = '';
   for (var i = 0; i < unsanitized.length; i++) {
-    if (unsanitized[i].match(/[0-9\-]/g)) sanitized += unsanitized[i];
+    if (unsanitized[i].match(/[0-9\-\.]/g)) sanitized += unsanitized[i];
   }
   event.target.value = sanitized;
 }
 
-var inputs = document.querySelectorAll('.half input');
-for (var i = 0; i < inputs.length; i++) {
-  inputs[i].addEventListener('change', sanitize, false);
-  inputs[i].addEventListener('keyup', sanitize, false);
-}
+var offsetInput = document.querySelector('#offset');
+offsetInput.addEventListener('change', sanitize, false);
+offsetInput.addEventListener('keyup', sanitize, false);
 
 var prepFile = function() {
   var contentInMemory = window.subtitleFile.content;
-  var secondsOffset = parseInt(document.querySelector('#offset_seconds').value);
-  var millisecondsOffset = parseInt(document.querySelector('#offset_milliseconds').value);
-  var newContent = processData(contentInMemory, secondsOffset, millisecondsOffset);
-  debugger
+  var offset = Number(document.querySelector('#offset').value) || 0;
+  var newContent = processData(contentInMemory, offset);
   var blob = new Blob([newContent], {type: 'application/x-subrip'});
   var url = window.URL.createObjectURL(blob);
   var saveButton = document.querySelector('#save');
