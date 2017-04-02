@@ -21,39 +21,28 @@ String.prototype.fromHHMMSS = function () {
     return seconds;
 }
 
-var offsetTime = function(detailedTime, offset) {
+var offsetTime = function(detailedTime, secondsOffset, millisecondsOffset) {
   var ms = detailedTime.split(',')[1];
   var HHMMSS = detailedTime.split(',')[0]; 
   var seconds = HHMMSS.fromHHMMSS();
-  var reduced = seconds + offset;
+  var reduced = seconds + secondsOffset;
   var newHHMMSS = reduced.toString().toHHMMSS();
   return [newHHMMSS, ms].join(',');
 }
 
-var processData = function(data) {
+var processData = function(data, seconds, milliseconds) {
   var lines = data.split('\n')
   for (var i = 0; i < lines.length; i++) {
     if (lines[i][2] === ':') {
       var startEnd = lines[i].split(' --> ');
-      var reducedStart = offsetTime(startEnd[0]);
-      var reducedEnd = offsetTime(startEnd[1]);
+      var reducedStart = offsetTime(startEnd[0], seconds, milliseconds);
+      var reducedEnd = offsetTime(startEnd[1], seconds, milliseconds);
       var newLine = [reducedStart, reducedEnd].join(' --> ');
       lines[i] = newLine;      
     }
   }
-  var newData = lines.join('\n');
-  //fs.writeFile('./sixSecondsReduced.srt', newData, function(err) {
-    //console.log(err);
-  //})    
+  return lines.join('\n');
 }
-
-//fs.readFile('./thieves2012.srt', 'utf-8', function (err, data) {
-  //if (err) {
-    //console.log(err)
-  //} else {
-    //processData(data);
-  //}
-//});
 
 function handleFileSelect(evt) {
   evt.stopPropagation();
@@ -63,16 +52,21 @@ function handleFileSelect(evt) {
 
   var output = [];
   for (var i = 0, f; f = files[i]; i++) {
-    console.log(f);
     output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
                 f.size, ' bytes, last modified: ',
                 f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
                 '</li>');
     document.querySelector('#save').style.display = 'block';
     document.querySelector('#drop_zone').style.display = 'none';
-
+    var filenameInput = document.querySelector('#filename');
+    if (filenameInput.value === '') filenameInput.value = f.name;
   }
   document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    window.subtitleFile = {name: files[0].name, content:e.target.result};
+  }
+  reader.readAsText(files[0]);
 }
 
 function handleDragOver(evt) {
@@ -89,7 +83,7 @@ var sanitize = function(event) {
   var unsanitized = event.target.value;
   var sanitized = '';
   for (var i = 0; i < unsanitized.length; i++) {
-    if (unsanitized[i].match(/[0-9]/g)) sanitized += unsanitized[i];
+    if (unsanitized[i].match(/[0-9\-]/g)) sanitized += unsanitized[i];
   }
   event.target.value = sanitized;
 }
@@ -101,7 +95,17 @@ for (var i = 0; i < inputs.length; i++) {
 }
 
 var prepFile = function() {
-  var file = new Blob([], {type: 'application/x-subrip'});
+  var contentInMemory = window.subtitleFile.content;
+  var secondsOffset = parseInt(document.querySelector('#offset_seconds').value);
+  var millisecondsOffset = parseInt(document.querySelector('#offset_milliseconds').value);
+  var newContent = processData(contentInMemory, secondsOffset, millisecondsOffset);
+  debugger
+  var blob = new Blob([newContent], {type: 'application/x-subrip'});
+  var url = window.URL.createObjectURL(blob);
+  var saveButton = document.querySelector('#save');
+  saveButton.href = url;
+  saveButton.download = document.querySelector('#filename').value;
+  window.location = url;
 }
 
-document.querySelector('#save').addEventListener('click', function() {debugger}, false);
+document.querySelector('#save').addEventListener('click', prepFile, false);
